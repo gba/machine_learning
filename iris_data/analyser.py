@@ -175,12 +175,9 @@ def get_kmeans(data, n_clusters, tolerance=1e-5):
     ''' 
     (n_points, n_dimensions) = data.shape
 
-    print('np.mean():', np.mean(data, axis=0))
-    print('np.std():', np.std(data, axis=0))
     centers = np.mean(data, axis=0) + \
               np.random.rand(n_clusters, n_dimensions) * \
               np.std(data, axis=0)
-    print('centers:', centers)
     
     error = 2 * tolerance
     while error > tolerance:
@@ -190,25 +187,22 @@ def get_kmeans(data, n_clusters, tolerance=1e-5):
         for p in range(n_points):
             
             data_point = data[p, :]
-            print('data_point:', data_point)
             
             min_distance = 1e15
             cluster_index = -1
             for k in range(n_clusters):
                 
                 center = centers[k, :]
-                print('center:', center)
                 
                 distance = \
                     np.linalg.norm(center - data_point)
-                print('distance:', distance)
+                
                 if distance < min_distance:
                     cluster_index = k
                     
                     min_distance = deepcopy(distance)
                     
             category[p, cluster_index] = 1
-            print('category:', category[p, :])
             
         old_centers = deepcopy(centers)
         centers = np.zeros((n_clusters, n_dimensions))
