@@ -6,13 +6,17 @@ data sets.
 Author: Gustav Baardsen
 '''
 
+import sys
 import numpy as np
+
+from copy import deepcopy
+
 
 
 def read_data(data_file):
     '''
     Reads data of the format 
-
+    
     float,float,float, ...,float,string
     
     and returns a Numpy array for the floating point
@@ -51,8 +55,8 @@ def print_data(numbers, names):
         print(numbers[i, :], ', ', names[i])
         
     print('')
-
-
+    
+    
 def split_data(numbers, names):
     '''
     Split the data set into different chunks for each
@@ -100,7 +104,7 @@ def get_traning_test_sets(data, ratio_training):
     return training_sets, test_sets
 
 
-def plot_2d(numbers, names,
+def plot_2d(numbers, names, clusters,
             xlabel='Property 1',
             ylabel='Property 2',
             title='2D plot of data set',
@@ -137,7 +141,12 @@ def plot_2d(numbers, names,
                 linestyle='None',
                 markeredgecolor=rand_color,
                 label=name)
-        
+
+    ax.plot(clusters[:, 0], clusters[:, 1],
+            color='r', marker='^',
+            linestyle='None',
+            markeredgecolor='r',
+            label='Cluster center')
         
     #     Set axis labels
     ax.set_xlabel(xlabel, fontsize=16)
@@ -154,10 +163,75 @@ def plot_2d(numbers, names,
     name = plot_name 
     fig.savefig(name + '.pdf', format='pdf', dpi=1000)
     
+
+def get_kmeans(data, n_clusters, tolerance=1e-5):
+    '''
+    The k-means algorithm, as given in Figure 7.3 of 
+    E. Alpaydin, Introduction to Machine Learning, 
+    The MIT Press, Cambridge, Massachusetts (2004).
     
+    data          : Data array. 
+    n_clusters    : Number of clusters.
+    ''' 
+    (n_points, n_dimensions) = data.shape
+
+    print('np.mean():', np.mean(data, axis=0))
+    print('np.std():', np.std(data, axis=0))
+    centers = np.mean(data, axis=0) + \
+              np.random.rand(n_clusters, n_dimensions) * \
+              np.std(data, axis=0)
+    print('centers:', centers)
     
-    
-    
+    error = 2 * tolerance
+    while error > tolerance:
+        
+        category = np.zeros((n_points, n_clusters),
+                            dtype=int)
+        for p in range(n_points):
+            
+            data_point = data[p, :]
+            print('data_point:', data_point)
+            
+            min_distance = 1e15
+            cluster_index = -1
+            for k in range(n_clusters):
+                
+                center = centers[k, :]
+                print('center:', center)
+                
+                distance = \
+                    np.linalg.norm(center - data_point)
+                print('distance:', distance)
+                if distance < min_distance:
+                    cluster_index = k
+                    
+                    min_distance = deepcopy(distance)
+                    
+            category[p, cluster_index] = 1
+            print('category:', category[p, :])
+            
+        old_centers = deepcopy(centers)
+        centers = np.zeros((n_clusters, n_dimensions))
+        for k in range(n_clusters):
+            
+            associated = category[:, k]
+            
+            if np.sum(associated) > 0:
+                centers[k, :] = np.dot(associated.T, data) / \
+                                np.sum(associated)
+            else:
+                centers[k, :] = old_centers[k, :]
+            
+        diff_array = old_centers - centers
+        
+        differences = np.linalg.norm(diff_array, axis=1)
+        
+        error = np.amax(differences)
+        
+    return centers
+
+
+
 def main():
     
     data_file = "data/iris.data"
@@ -166,8 +240,18 @@ def main():
     
     #print_data(numbers, names)
     
-    parameters = np.array([1, 3])
-    plot_2d(numbers[:, parameters], names)
+    parameters = np.array([2, 3])
+    
+    
+    n_clusters = 2
+    tolerance = 1e-5
+    clusters = get_kmeans(numbers[:, parameters], n_clusters,
+                          tolerance)
+    #print('Clusters:', clusters)
+    
+    
+    plot_2d(numbers[:, parameters], names, clusters)
+    
     
     
 if __name__ == "__main__":
