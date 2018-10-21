@@ -104,6 +104,65 @@ def get_traning_test_sets(data, ratio_training):
     return training_sets, test_sets
 
 
+def plot_clusters(points, clusters,
+                  xlabel='Property 1',
+                  ylabel='Property 2',
+                  title='k-means clustering',
+                  plot_name='clusters'):
+    
+    import numpy as np
+    import matplotlib 
+    import matplotlib.pyplot as pyplot
+    
+    from matplotlib.ticker import AutoMinorLocator
+
+
+    #     Use Latex font as default
+    matplotlib.rc('font',
+                  **{'family':'serif',
+                     'serif':['Helvetica']})
+    matplotlib.rc('text', usetex=True)
+    matplotlib.rcParams.update({'font.size': 14})
+    matplotlib.rc('legend',**{'fontsize':14})
+
+    #     Initialize a figure
+    fig = pyplot.figure(figsize=(7, 6.3), dpi=100)
+    ax = pyplot.gca()
+
+    for k in range(len(points)):
+
+        data = points[k]
+        rand_color = np.random.rand(3)
+        
+        ax.plot(data[:, 0], data[:, 1],
+                color=rand_color,
+                marker='s',
+                linestyle='None',
+                markeredgecolor=rand_color,
+                label='Cluster ' + str(k + 1))
+        
+    ax.plot(clusters[:, 0], clusters[:, 1],
+            color='r', marker='^',
+            linestyle='None',
+            markeredgecolor='r',
+            label='Cluster center')
+    
+    #     Set axis labels
+    ax.set_xlabel(xlabel, fontsize=16)
+    ax.set_ylabel(ylabel, fontsize=16)
+    
+    pyplot.title(title)
+    
+    #     Legend
+    l = pyplot.legend(loc='lower right', labelspacing=0.1)
+    frame = l.get_frame()
+    frame.set_lw(0.6)
+    
+    #     Save the plot
+    name = plot_name 
+    fig.savefig(name + '.pdf', format='pdf', dpi=1000)
+
+
 def plot_2d(numbers, names, clusters,
             xlabel='Property 1',
             ylabel='Property 2',
@@ -221,8 +280,16 @@ def get_kmeans(data, n_clusters, tolerance=1e-5):
         differences = np.linalg.norm(diff_array, axis=1)
         
         error = np.amax(differences)
+
+    points = []
+    for k in range(n_clusters):
         
-    return centers
+        associated = np.where(category[:, k])
+        points_this = data[associated, :][0]
+        
+        points.append(points_this)
+        
+    return centers, points
 
 
 
@@ -238,15 +305,18 @@ def main():
     
     
     n_clusters = 2
-    tolerance = 1e-5
-    clusters = get_kmeans(numbers[:, parameters], n_clusters,
-                          tolerance)
+    tolerance = 1e-7
+    clusters, points = get_kmeans(numbers[:, parameters],
+                                  n_clusters,
+                                  tolerance)
     #print('Clusters:', clusters)
     
     
     plot_2d(numbers[:, parameters], names, clusters)
     
-    
+    plot_clusters(points, clusters)
+
+                  
     
 if __name__ == "__main__":
     main()
