@@ -13,6 +13,17 @@ from sklearn.utils import shuffle
 '''
 Author          : Gustav Baardsen
 First version   : January 2019 
+
+A program to predict the class of biker based on data such
+as duration, start station, end station, and bike ID.
+
+The exercise was suggested on
+https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
+(Trip history data set).
+
+The required data may be downloaded from
+https://s3.amazonaws.com/capitalbikeshare-data/index.html
+
 '''
 
 
@@ -109,8 +120,8 @@ def get_train_test_dev_sets(input_data,
 def setup_trained_network(x_train,
                           y_train,
                           opt_algorithm = 'adam',
-                          loss_function = 'mean_squared_error',
-                          error_metrics = ['mse'],
+                          loss_function = 'mean_absolute_percentage_error',
+                          error_metrics = ['accuracy'],
                           n_per_layer = [8, 8, 8, 1],
                           n_iterations = 1,
                           n_batch = 30):
@@ -166,8 +177,8 @@ class NNPredictor:
         
     def train_network(self,
                       optimization = 'adam',
-                      loss = 'mean_squared_error',
-                      metrics = ['mse'],
+                      loss = 'binary_crossentropy',
+                      metrics = ['accuracy'],
                       n_neurons = [8, 8, 8, 1],
                       n_mainloop = 1,
                       batch_size = 10):
@@ -192,11 +203,11 @@ class NNPredictor:
         assert self.network is not None, m
         
         # Test the optimized network
-        loss, mse = self.network.evaluate(self.in_dev,
-                                          self.out_dev)
-        print('\nErrors in the development set:')
+        loss, metrics = self.network.evaluate(self.in_dev,
+                                              self.out_dev)
+        print('\nError in the development set:')
         print('\nLoss:', loss)
-        print('Mean-square error:', mse, '\n')
+        print('Accuracy:', metrics, '\n')
         
         
         predictions = self.network.predict(self.in_dev)
@@ -213,9 +224,11 @@ class NNPredictor:
                          markers    = ['s', '^'],
                          linetypes  = ['None', 'None'],
                          labels     = ['Correct values', 'Predictions'])
-        v.make_plot(x_limits = [0, 50],
-                    y_limits = [0, 0.1])
-        
+        n_plots = 10
+        for i in range(n_plots):
+            v.make_plot(x_limits = [50*i, 50*(i+1)],
+                        y_limits = [0, 1.5])
+            
     def test(self):
         '''
         Test the trained network.
@@ -297,6 +310,10 @@ class Visualiser1D:
 def main():
     
     #
+    # The exercise is suggested on
+    # https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
+    # (Trip history data set).
+    #
     # The data can be downloaded from
     # https://s3.amazonaws.com/capitalbikeshare-data/index.html
     #
@@ -304,8 +321,8 @@ def main():
     
     data = BikingData(data_file)
     
-    input_data  = data.get_array()[:, 1:]
-    output_data = data.get_array()[:, 0:1]
+    input_data  = data.get_array()[:, :4]
+    output_data = data.get_array()[:, 4:5]
     
     analyser = NNPredictor(input_data,
                            output_data)
