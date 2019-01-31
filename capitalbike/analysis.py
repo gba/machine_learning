@@ -122,7 +122,7 @@ def setup_trained_network(x_train,
                           opt_algorithm = 'adam',
                           loss_function = 'mean_absolute_percentage_error',
                           error_metrics = ['accuracy'],
-                          n_per_layer = [8, 8, 8, 1],
+                          n_per_layer = [8, 8, 8],
                           n_iterations = 1,
                           n_batch = 30):
     
@@ -131,11 +131,11 @@ def setup_trained_network(x_train,
     network.add(ks.layers.Dense(units = n_per_layer[0],
                                 activation = tf.nn.relu,
                                 input_shape = x_train[0].shape))
-    for i in [1, len(n_per_layer) - 2]:
-        network.add(ks.layers.Dense(units = n_per_layer[1],
+    for i in range(1, len(n_per_layer) - 1):
+        network.add(ks.layers.Dense(units = n_per_layer[i],
                                     activation = tf.nn.relu))
             
-    network.add(ks.layers.Dense(units = n_per_layer[-1],
+    network.add(ks.layers.Dense(units = y_train.shape[1],
                                 activation = tf.nn.tanh))
     
     # Choose the optimization method and error metrics
