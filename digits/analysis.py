@@ -28,6 +28,14 @@ under 'Identify your Digits Dataset'.
 The pictures may be downloaded from 
 http://yann.lecun.com/exdb/mnist/
 
+
+The MNIST digit classification problem is discussed in detail 
+in the Tensorflow manual 
+
+https://www.tensorflow.org/tutorials/estimators/cnn 
+
+for a case with a convolutional neural network.
+
 '''
 
 
