@@ -8,7 +8,10 @@ import tensorflow as tf
 import tensorflow.keras as ks
 import matplotlib.pyplot as plt
 
+import keras.utils.np_utils as ks_utils
+
 from sklearn.utils import shuffle
+
 
 '''
 Author          : Gustav Baardsen
@@ -19,10 +22,17 @@ as duration, start station, end station, and bike ID.
 
 The exercise was suggested on
 https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
-(Trip history data set).
+under the title 'Trip history data set'.
 
 The required data may be downloaded from
 https://s3.amazonaws.com/capitalbikeshare-data/index.html
+
+
+To write the code below, the tutorial
+
+https://www.tensorflow.org/tutorials/keras/basic_classification
+
+was useful.
 
 '''
 
@@ -64,8 +74,11 @@ class BikingData:
 def normalize_columns(data):
     '''
     Normalize the columns of the array 'data'.
+
+    data      : data[i, j] is the sample i for variable j.
     '''
-    min_values = np.amin(data, axis = 0)
+    min_values = np.amin(data,
+                         axis = 0)
     max_values = np.amax(np.absolute(data),
                          axis = 0)
     return (data - min_values) / (max_values - min_values)
@@ -136,7 +149,7 @@ def setup_trained_network(x_train,
                                     activation = tf.nn.relu))
             
     network.add(ks.layers.Dense(units = y_train.shape[1],
-                                activation = tf.nn.tanh))
+                                activation = tf.nn.softmax))
     
     # Choose the optimization method and error metrics
     network.compile(optimizer = opt_algorithm,
@@ -177,11 +190,11 @@ class NNPredictor:
         
     def train_network(self,
                       optimization = 'adam',
-                      loss = 'binary_crossentropy',
+                      loss = tf.losses.softmax_cross_entropy,
                       metrics = ['accuracy'],
-                      n_neurons = [8, 8, 8, 1],
-                      n_mainloop = 1,
-                      batch_size = 10):
+                      n_neurons = [8, 8, 8],
+                      n_mainloop = 4,
+                      batch_size = 30):
         '''
         Train a neural network using self.x_train and 
         self.y_train.
@@ -215,8 +228,10 @@ class NNPredictor:
         n = self.in_dev.shape[0]
         points = np.arange(n)
         
-        predict     = np.reshape(predictions, (n))
-        output_dev  = np.reshape(self.out_dev, (n))
+        predict     = np.argmax(predictions,
+                                axis = 1)
+        output_dev  = np.argmax(self.out_dev,
+                                axis = 1)
         
         v = Visualiser1D(x_points   = [points, points],
                          y_points   = [output_dev, predict, ],
@@ -241,8 +256,45 @@ class NNPredictor:
             #print(x_test[i, :], y_test[i, 0])
             
         print('')
-        
-        
+
+
+def plot_covariance(data):
+    '''
+    Plot the covariance matrix of 'data'.
+
+    data      : data[i, j] is the sample i for variable j.
+    '''
+    normalized_data = normalize_columns(data)
+    covariance = np.cov(np.transpose(normalized_data))
+    
+    print('\nCovariance matrix for the data:\n')
+    n = covariance.shape[0]
+    
+    for i in range(n):
+        for j in range(n):
+            print(covariance[i, j],
+                  end = " ")
+        print('')
+    print('')
+    
+    
+    plt.imshow(np.absolute(covariance))
+    plt.colorbar()
+    
+    plt.title('Absolute values of the covariance matrix')
+    
+    items = np.arange(n, dtype=int)
+    values = ['Duration',
+              'Start station',
+              'End station',
+              'Bike',
+              'Member type']
+    plt.xticks(items, values, size = 8)
+    plt.yticks(items, values, size = 8)
+    
+    plt.show()
+    
+    
 class Visualiser1D:
     '''
     Class for 1D plots.
@@ -310,27 +362,54 @@ class Visualiser1D:
 def main():
     
     #
-    # The exercise is suggested on
-    # https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
-    # (Trip history data set).
+    # Before running the program, download the data from
     #
-    # The data can be downloaded from
     # https://s3.amazonaws.com/capitalbikeshare-data/index.html
+    #
+    # The program is run by calling ./analysis.py.
     #
     data_file = '2017Q1-capitalbikeshare-tripdata.csv'
     
     data = BikingData(data_file)
+
+    print('\nCategories in the data:')
+    variables = data.get_categories()
+    for i in range(variables.shape[0] - 1):
+        print(variables[i],
+              end = '; ')
+    print(variables[-1],
+          '\n')
     
     input_data  = data.get_array()[:, :4]
     output_data = data.get_array()[:, 4:5]
     
+    # Plot the covariance matrix between the variables
+    plot_covariance(data.get_array())
+    
+    
+    output_data_c = ks_utils.to_categorical(output_data,
+                                            num_classes = 2)
+    
     analyser = NNPredictor(input_data,
-                           output_data)
+                           output_data_c)
     
     analyser.partition_data()
-    analyser.train_network()
-    analyser.validate()
     
+    opt_algorithm = 'adam'
+    loss_function = tf.losses.softmax_cross_entropy
+    error_metrics = ['accuracy']
+    n_per_layer   = [8, 8, 8]
+    n_iterations  = 4
+    n_batch       = 30
+    
+    analyser.train_network(optimization = opt_algorithm,
+                           loss = loss_function,
+                           metrics = error_metrics,
+                           n_neurons = n_per_layer,
+                           n_mainloop = n_iterations,
+                           batch_size = n_batch)
+    
+    analyser.validate()
     
     
     #print(data.get_categories())

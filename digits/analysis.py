@@ -283,7 +283,7 @@ def load_pictures(directory,
     print('\nSize of training set     :', n_train)
     print('Size of development set  :', n_dev)
     print('Size of test set         :', n_test, '\n')
-
+    
     # Let the input be Numpy arrays, reshape, and
     # normalize the data.
     input_train      = np.array(in_train) / 255.0

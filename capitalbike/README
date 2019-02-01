@@ -1,0 +1,29 @@
+
+#########################################################################
+
+This is a program that may be used to predict the class of biker
+based on data such as duration, start station, end station, and
+bike ID.
+
+The exercise was suggested on
+
+    https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
+
+under the title 'Trip history data set'.
+
+#########################################################################
+
+Requirements:
+	- Python 3, including the Python libraries
+	Numpy, Pandas, Tensorflow, Keras, Scikit-learn, and
+	Matplotlib
+
+Before running the code, download the biking data from
+
+   https://www.tensorflow.org/tutorials/estimators/cnn ,
+
+store them in the same directory as analysis.py.
+
+The program may be run by calling
+
+./analysis.py
