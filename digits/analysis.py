@@ -36,18 +36,27 @@ https://www.tensorflow.org/tutorials/estimators/cnn
 
 for a case with a convolutional neural network.
 
+
+To write the code below, the tutorial
+
+https://www.tensorflow.org/tutorials/keras/basic_classification
+
+was also useful.
+
 '''
 
 
-def setup_trained_network(x_train,
-                          y_train,
-                          opt_algorithm = 'adam',
-                          loss_function = tf.losses.softmax_cross_entropy,
-                          error_metrics = ['accuracy'],
-                          n_per_layer = [8, 8, 8],
-                          n_iterations = 5,
-                          n_batch = 30):
-    
+def setup_neural_network(x_train,
+                         y_train,
+                         opt_algorithm = 'adam',
+                         loss_function = tf.losses.softmax_cross_entropy,
+                         error_metrics = ['accuracy'],
+                         n_per_layer = [8, 8, 8],
+                         n_iterations = 5,
+                         n_batch = 30):
+    '''
+    Set up and train a conventional deep neural network.
+    '''
     # Construct a neural network
     network = ks.Sequential()
     network.add(ks.layers.Dense(units = n_per_layer[0],
@@ -73,9 +82,36 @@ def setup_trained_network(x_train,
     return network
 
 
-# def setup_convolutional_network():
-
-
+# def setup_convolutional_neural_network(x_train,
+#                                        y_train,
+#                                        opt_algorithm = 'adam',
+#                                        loss_function = tf.losses.softmax_cross_entropy,
+#                                        error_metrics = ['accuracy'],
+#                                        units_dense = [32, 8, 8],
+#                                        n_filters = [],
+#                                        n_iterations = 5,
+#                                        n_batch = 30):
+#     '''
+#     Set up an train a convolutional neural network.
+    
+#     This implementation is inspired by the example in
+    
+#     https://www.tensorflow.org/tutorials/estimators/cnn ,
+ 
+#     but here we use functionalities from keras.layers to set up 
+#     the network in a simpler way.
+    
+#     '''
+#     # Construct a neural network
+#     network = ks.Sequential()
+#     network.add(ks.layers.Dense(units = 32,
+#                                 activation = tf.nn.relu,
+#                                 input_shape = x_train[0].shape))
+#     network.add(ks.layers.Conv2D(filters = 16,
+#                                  kernel_size = 5,
+#                                  padding = 'same',
+#                                  data_format = 'channels_last'))
+    
 #     return network
 
 
