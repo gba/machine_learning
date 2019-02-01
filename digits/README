@@ -1,0 +1,36 @@
+
+#########################################################################
+
+This is a simple program to read integers from pictures using
+supervised learning.
+
+The exercise is a classical one, and was suggested on
+
+    https://www.analyticsvidhya.com/blog/2018/05/24-ultimate-data-science-projects-to-boost-your-knowledge-and-skills/
+
+under 'Identify your Digits Dataset'.
+
+The MNIST digit classification problem is discussed in detail 
+in the Tensorflow manual 
+
+   https://www.tensorflow.org/tutorials/estimators/cnn 
+
+for a case with a convolutional neural network.
+
+
+#########################################################################
+
+Requirements:
+	- Python 3, including the Python libraries
+	Numpy, Tensorflow, MNIST, and Matplotlib
+
+
+To run the code, download the digit pictures from
+
+   http://yann.lecun.com/exdb/mnist/
+
+and store them in a subdirectory called 'pictures'.
+
+Then run the program with
+
+./analysis.py

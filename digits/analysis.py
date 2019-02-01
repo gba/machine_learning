@@ -323,7 +323,13 @@ def load_pictures(directory,
 
 def main():
     
-    show_pictures = False 
+    #
+    # To run the code, download first the digit pictures from
+    # http://yann.lecun.com/exdb/mnist/
+    # and store them in a subdirectory called 'pictures'.
+    #
+    
+    show_pictures = True 
     directory = 'pictures'
     data = load_pictures(directory,
                          show_pictures)
@@ -331,10 +337,10 @@ def main():
     # Train a conventional deep neural network...
     n_mainloop = 15
     network_layout = [32, 16, 8, 8, 8]
-    network = setup_trained_network(data.in_train,
-                                    data.out_train,
-                                    n_iterations = n_mainloop,
-                                    n_per_layer = network_layout)
+    network = setup_neural_network(data.in_train,
+                                   data.out_train,
+                                   n_iterations = n_mainloop,
+                                   n_per_layer = network_layout)
     # ...and validate it.
     validate(network,
              data.in_dev,
