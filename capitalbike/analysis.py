@@ -73,15 +73,20 @@ class BikingData:
     
 def normalize_columns(data):
     '''
-    Normalize the columns of the array 'data'.
-
+    Normalize the columns of the array 'data' so that
+    the mean is zero and the standard deviation is one.
+    
     data      : data[i, j] is the sample i for variable j.
     '''
-    min_values = np.amin(data,
-                         axis = 0)
-    max_values = np.amax(np.absolute(data),
-                         axis = 0)
-    return (data - min_values) / (max_values - min_values)
+    
+    m = 'Error. The parameter "data" must be a ' + \
+        'two-dimensional Numpy.'
+    assert len(data.shape) == 2, m
+    
+    mu = np.mean(data, axis = 0)
+    s  = np.std(data, axis = 0, ddof = 1)
+    
+    return (data - mu) / s
 
 
 def split_columns(data, ratios):
@@ -261,11 +266,11 @@ class NNPredictor:
 def plot_covariance(data):
     '''
     Plot the covariance matrix of 'data'.
-
+    
     data      : data[i, j] is the sample i for variable j.
     '''
     normalized_data = normalize_columns(data)
-    covariance = np.cov(np.transpose(normalized_data))
+    covariance = np.cov(np.transpose(normalized_data), ddof = 1)
     
     print('\nCovariance matrix for the data:\n')
     n = covariance.shape[0]

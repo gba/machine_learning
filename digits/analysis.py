@@ -82,37 +82,37 @@ def setup_neural_network(x_train,
     return network
 
 
-# def setup_convolutional_neural_network(x_train,
-#                                        y_train,
-#                                        opt_algorithm = 'adam',
-#                                        loss_function = tf.losses.softmax_cross_entropy,
-#                                        error_metrics = ['accuracy'],
-#                                        units_dense = [32, 8, 8],
-#                                        n_filters = [],
-#                                        n_iterations = 5,
-#                                        n_batch = 30):
-#     '''
-#     Set up an train a convolutional neural network.
+def setup_convolutional_neural_network(x_train,
+                                       y_train,
+                                       opt_algorithm = 'adam',
+                                       loss_function = tf.losses.softmax_cross_entropy,
+                                       error_metrics = ['accuracy'],
+                                       units_dense = [32, 8, 8],
+                                       n_filters = [],
+                                       n_iterations = 5,
+                                       n_batch = 30):
+    '''
+    Set up an train a convolutional neural network.
     
-#     This implementation is inspired by the example in
+    This implementation is inspired by the example in
     
-#     https://www.tensorflow.org/tutorials/estimators/cnn ,
+    https://www.tensorflow.org/tutorials/estimators/cnn ,
  
-#     but here we use functionalities from keras.layers to set up 
-#     the network in a simpler way.
+    but here we use functionalities from keras.layers to set up 
+    the network in a simpler way.
     
-#     '''
-#     # Construct a neural network
-#     network = ks.Sequential()
-#     network.add(ks.layers.Dense(units = 32,
-#                                 activation = tf.nn.relu,
-#                                 input_shape = x_train[0].shape))
-#     network.add(ks.layers.Conv2D(filters = 16,
-#                                  kernel_size = 5,
-#                                  padding = 'same',
-#                                  data_format = 'channels_last'))
+    '''
+    # Construct a neural network
+    network = ks.Sequential()
+    network.add(ks.layers.Dense(units = 32,
+                                activation = tf.nn.relu,
+                                input_shape = x_train[0].shape))
+    network.add(ks.layers.Conv2D(filters = 16,
+                                 kernel_size = 5,
+                                 padding = 'same',
+                                 data_format = 'channels_last'))
     
-#     return network
+    return network
 
 
 
@@ -253,6 +253,24 @@ def split_array_axis0(array, n):
     Split array along the first axis.
     '''
     return array[:n, :], array[n:, :]
+
+
+def normalize_columns(data):
+    '''
+    Normalize the columns of the array 'data' so that
+    the mean is zero and the standard deviation is one.
+
+    data      : data[i, j] is the sample i for variable j.
+    '''
+    
+    m = 'Error. The parameter "data" must be a ' + \
+        'two-dimensional Numpy.'
+    assert len(data.shape) == 2, m
+    
+    mu = np.mean(data, axis = 0)
+    s  = np.std(data, axis = 0, ddof = 1)
+    
+    return (data - mu) / s
 
 
 def load_pictures(directory,
