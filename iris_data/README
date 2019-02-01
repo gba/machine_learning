@@ -1,0 +1,14 @@
+
+#########################################################################
+
+This is a simple program to test a k-means clustering algorithm
+on the classical Iris data set.
+
+#########################################################################
+
+Requirements:
+	- Python 3, including Numpy and Matplotlib
+
+To run the code, type
+
+./analyser.py

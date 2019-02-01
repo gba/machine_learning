@@ -1,9 +1,14 @@
+#!/usr/bin/env python3
 
 '''
 Program for machine learning analysis of simple
 data sets.
 
 Author: Gustav Baardsen
+
+A clustering algorithm is used to distinguish clusters
+of points realted to the classical Iris data set.
+
 '''
 
 import sys
@@ -114,17 +119,16 @@ def plot_clusters(points, clusters,
     import matplotlib 
     import matplotlib.pyplot as pyplot
     
+    from matplotlib import rcParams
     from matplotlib.ticker import AutoMinorLocator
 
-
     #     Use Latex font as default
-    matplotlib.rc('font',
-                  **{'family':'serif',
-                     'serif':['Helvetica']})
+    rcParams['font.family'] = 'serif'
+    rcParams['font.serif'] = ['DejaVu Serif']
     matplotlib.rc('text', usetex=True)
     matplotlib.rcParams.update({'font.size': 14})
     matplotlib.rc('legend',**{'fontsize':14})
-
+    
     #     Initialize a figure
     fig = pyplot.figure(figsize=(7, 6.3), dpi=100)
     ax = pyplot.gca()
@@ -162,6 +166,8 @@ def plot_clusters(points, clusters,
     name = plot_name 
     fig.savefig(name + '.pdf', format='pdf', dpi=1000)
 
+    pyplot.show()
+    
 
 def plot_2d(numbers, names, clusters,
             xlabel='Property 1',
@@ -174,18 +180,18 @@ def plot_2d(numbers, names, clusters,
     import numpy as np
     import matplotlib 
     import matplotlib.pyplot as pyplot
-    
+
+    from matplotlib import rcParams
     from matplotlib.ticker import AutoMinorLocator
 
 
     #     Use Latex font as default
-    matplotlib.rc('font',
-                  **{'family':'serif',
-                     'serif':['Helvetica']})
+    rcParams['font.family'] = 'serif'
+    rcParams['font.serif'] = ['DejaVu Serif']
     matplotlib.rc('text', usetex=True)
     matplotlib.rcParams.update({'font.size': 14})
     matplotlib.rc('legend',**{'fontsize':14})
-
+    
     #     Initialize a figure
     fig = pyplot.figure(figsize=(7, 6.3), dpi=100)
     ax = pyplot.gca()
@@ -221,6 +227,8 @@ def plot_2d(numbers, names, clusters,
     #     Save the plot
     name = plot_name 
     fig.savefig(name + '.pdf', format='pdf', dpi=1000)
+
+    pyplot.show()
     
 
 def get_kmeans(data, n_clusters, tolerance=1e-5):
@@ -295,27 +303,55 @@ def get_kmeans(data, n_clusters, tolerance=1e-5):
 
 def main():
     
+    #
+    # Read the classical Iris data set, which contains
+    # data about three different flowers.
+    #
     data_file = "data/iris.data"
     
     numbers, names = read_data(data_file)
     
-    #print_data(numbers, names)
-    
-    parameters = np.array([2, 3])
-    
-    
-    n_clusters = 2
-    tolerance = 1e-7
-    clusters, points = get_kmeans(numbers[:, parameters],
-                                  n_clusters,
-                                  tolerance)
-    #print('Clusters:', clusters)
-    
-    
-    plot_2d(numbers[:, parameters], names, clusters)
-    
-    plot_clusters(points, clusters)
+    # Print the data set to the command line
+    print_iris = True
+    if print_iris:
+        print_data(numbers, names)
+        
+    # Set up a list of parameter pairs
+    n = 4
+    pairs = []
+    for i in range(n):
+        for j in range(i+1, n):
+            pairs.append([i, j])
+            
+    #
+    # For each pair of parameters, find two clusters in the
+    # correlation plot.
+    #
+    for p in pairs:
+        
+        parameters = np.array(p)
 
+        #
+        # Search for two clusters
+        #
+        n_clusters = 2
+        tolerance = 1e-7
+        clusters, points = get_kmeans(numbers[:, parameters],
+                                      n_clusters,
+                                      tolerance)
+        #print('Clusters:', clusters)
+        
+        suffix = '_' + str(p[0]) + '_' + str(p[1])
+        
+        plot_2d(numbers[:, parameters],
+                names,
+                clusters,
+                plot_name = 'cross_section' + suffix)
+        
+        plot_clusters(points,
+                      clusters,
+                      plot_name = 'clusters' + suffix)
+        
                   
     
 if __name__ == "__main__":
