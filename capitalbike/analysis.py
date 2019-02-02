@@ -9,8 +9,10 @@ import tensorflow.keras as ks
 import matplotlib.pyplot as plt
 
 import keras.utils.np_utils as ks_utils
+import keras.regularizers as reg
 
 from sklearn.utils import shuffle
+from sklearn.linear_model import LinearRegression
 
 
 '''
@@ -46,6 +48,7 @@ class BikingData:
         
         # Randomly shuffle the rows
         self.data = shuffle(self.data)
+        #print(self.data)
         
         # Replace categories by numbers
         self.data['Bike number'] = \
@@ -69,6 +72,15 @@ class BikingData:
     
     def get_array(self):
         return self.data.get_values()
+
+    def print_categories(self):
+        
+        print('\nCategories in the data:\n')
+        variables = self.get_categories()
+        for i in range(variables.shape[0]):
+            print(' ', variables[i])
+            
+        print('')
     
     
 def normalize_columns(data):
@@ -114,14 +126,14 @@ def get_train_test_dev_sets(input_data,
     '''
     # Normalize the data
     input_norm  = normalize_columns(input_data)
-    output_norm = normalize_columns(output_data)
+    #output_norm = normalize_columns(output_data)
     
     # Divide into training and test sets
     in_train, in_dev, in_test = \
         split_columns(input_norm,
                       ratios_train_dev)
     out_train, out_dev, out_test = \
-        split_columns(output_norm,
+        split_columns(output_data,
                       ratios_train_dev)
     
     n_train = in_train.shape[0]
@@ -142,19 +154,29 @@ def setup_trained_network(x_train,
                           error_metrics = ['accuracy'],
                           n_per_layer = [8, 8, 8],
                           n_iterations = 1,
-                          n_batch = 30):
+                          n_batch = 30,
+                          reg_parameters = [0.01, 0.01]):
+    '''
+    Train a neural network with a given number of layers.
+    '''
     
     # Construct a neural network
     network = ks.Sequential()
     network.add(ks.layers.Dense(units = n_per_layer[0],
                                 activation = tf.nn.relu,
+                                kernel_regularizer = reg.l1_l2(l1 = reg_parameters[0],
+                                                               l2 = reg_parameters[1]),
                                 input_shape = x_train[0].shape))
     for i in range(1, len(n_per_layer) - 1):
         network.add(ks.layers.Dense(units = n_per_layer[i],
-                                    activation = tf.nn.relu))
-            
+                                    activation = tf.nn.relu,
+                                    kernel_regularizer = reg.l1_l2(l1 = reg_parameters[0],
+                                                                   l2 = reg_parameters[1])))
+        
     network.add(ks.layers.Dense(units = y_train.shape[1],
-                                activation = tf.nn.softmax))
+                                activation = tf.nn.softmax,
+                                kernel_regularizer = reg.l1_l2(l1 = reg_parameters[0],
+                                                               l2 = reg_parameters[1])))
     
     # Choose the optimization method and error metrics
     network.compile(optimizer = opt_algorithm,
@@ -169,6 +191,46 @@ def setup_trained_network(x_train,
     return network
 
 
+def ratio_correctly_predicted_false(predictions,
+                                    labels):
+    '''
+    Compute the ratio of correctly predicted false values.
+    '''
+    sum_labels = predictions + labels
+
+    n_labels = labels.shape[0]
+    n_false  = n_labels - np.count_nonzero(labels)
+    n_correctly_pred_false = n_labels - \
+                        np.count_nonzero(sum_labels)
+    return float(n_correctly_pred_false) / float(n_false)
+
+
+def ratio_correctly_predicted_true(predictions,
+                                   labels):
+    '''
+    Compute the ratio of correctly predicted true values.
+    '''
+    correctly_predicted_true = predictions * labels
+
+    n_true = np.count_nonzero(labels)
+    n_correctly_pred_true = np.sum(correctly_predicted_true)
+    
+    return float(n_correctly_pred_true) / float(n_true)
+    
+
+def classify_from_regression(predictions,
+                             labels):
+    '''
+    Classify regression results.
+    '''
+    predicted_classes = (predictions > 0.5).astype(int)
+    
+    n_correctly_pred  = np.sum(predicted_classes == labels)
+    n_samples         = labels.shape[0]
+    
+    return float(n_correctly_pred) / float(n_samples)
+    
+
 class NNPredictor:
     '''
     Class for prediciton using a neural network.
@@ -176,22 +238,19 @@ class NNPredictor:
     network = None
     
     def __init__(self,
-                 input_data,
-                 output_data):
+                 input_train,
+                 input_dev,
+                 input_test,
+                 output_train,
+                 output_dev,
+                 output_test):
         
-        self.input_data = input_data
-        self.output_data = output_data
-        
-    def partition_data(self,
-                       ratios_train_dev = [0.8, 0.199]):
-        '''
-        Partition the data into training, development, and
-        test sets.
-        '''
-        self.in_train, self.in_dev, self.in_test, \
-            self.out_train, self.out_dev, self.out_test = \
-                get_train_test_dev_sets(self.input_data,
-                                        self.output_data)
+        self.in_train  = input_train
+        self.in_dev    = input_dev
+        self.in_test   = input_test
+        self.out_train = output_train
+        self.out_dev   = output_dev
+        self.out_test  = output_test
         
     def train_network(self,
                       optimization = 'adam',
@@ -199,7 +258,8 @@ class NNPredictor:
                       metrics = ['accuracy'],
                       n_neurons = [8, 8, 8],
                       n_mainloop = 4,
-                      batch_size = 30):
+                      batch_size = 30,
+                      reg_params = [0.01, 0.01]):
         '''
         Train a neural network using self.x_train and 
         self.y_train.
@@ -211,7 +271,8 @@ class NNPredictor:
                                              error_metrics = metrics,
                                              n_per_layer = n_neurons,
                                              n_iterations = n_mainloop,
-                                             n_batch = batch_size)
+                                             n_batch = batch_size,
+                                             reg_parameters = reg_params)
         
     def validate(self):
         '''
@@ -377,17 +438,13 @@ def main():
     
     data = BikingData(data_file)
 
-    print('\nCategories in the data:')
-    variables = data.get_categories()
-    for i in range(variables.shape[0] - 1):
-        print(variables[i],
-              end = '; ')
-    print(variables[-1],
-          '\n')
+    data.print_categories()
+    
     
     input_data  = data.get_array()[:, :4]
     output_data = data.get_array()[:, 4:5]
     
+
     # Plot the covariance matrix between the variables
     plot_covariance(data.get_array())
     
@@ -395,24 +452,52 @@ def main():
     output_data_c = ks_utils.to_categorical(output_data,
                                             num_classes = 2)
     
-    analyser = NNPredictor(input_data,
-                           output_data_c)
+    # Partition the data set into training, development,
+    # and test sets. The input and output data are also
+    # normalized.
+    input_train, input_dev, input_test, \
+        output_train, output_dev, output_test = \
+            get_train_test_dev_sets(input_data,
+                                    output_data_c)
     
-    analyser.partition_data()
+    # First, classify using linear regression with
+    # a least-squares error functional
+    regressor = LinearRegression()
+    regressor.fit(input_train,
+                  output_train[:, 0])
+    output_linreg = regressor.predict(input_dev)
     
-    opt_algorithm = 'adam'
-    loss_function = tf.losses.softmax_cross_entropy
-    error_metrics = ['accuracy']
-    n_per_layer   = [8, 8, 8]
-    n_iterations  = 4
-    n_batch       = 30
+    accuracy = classify_from_regression(output_linreg,
+                                        output_dev[:, 1])
+    print('\nClassification accuracy of linear regression:',
+          accuracy,
+          '\n')
+
     
+    # Create a neural-network predictor object
+    analyser = NNPredictor(input_train,
+                           input_dev,
+                           input_test,
+                           output_train,
+                           output_dev,
+                           output_test)
+    
+    opt_algorithm   = 'adam'
+    loss_function   = tf.losses.softmax_cross_entropy
+    error_metrics   = ['accuracy']
+    n_per_layer     = [4, 4, 4]
+    n_iterations    = 4
+    n_batch         = 500
+    reg_parameters  = [0.0, 0.0]
+    
+    print('Next, a neural network is trained...')
     analyser.train_network(optimization = opt_algorithm,
                            loss = loss_function,
                            metrics = error_metrics,
                            n_neurons = n_per_layer,
                            n_mainloop = n_iterations,
-                           batch_size = n_batch)
+                           batch_size = n_batch,
+                           reg_params = reg_parameters)
     
     analyser.validate()
     
