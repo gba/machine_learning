@@ -274,7 +274,9 @@ class NNPredictor:
                                              n_batch = batch_size,
                                              reg_parameters = reg_params)
         
-    def validate(self):
+    def validate(self,
+                 input_val,
+                 output_val):
         '''
         Validate the trained network.
         '''
@@ -282,25 +284,25 @@ class NNPredictor:
         assert self.network is not None, m
         
         # Test the optimized network
-        loss, metrics = self.network.evaluate(self.in_dev,
-                                              self.out_dev)
+        loss, metrics = self.network.evaluate(input_val,
+                                              output_val)
         print('\nError in the development set:')
         print('\nLoss:', loss)
         print('Accuracy:', metrics, '\n')
         
         
-        predictions = self.network.predict(self.in_dev)
+        predictions = self.network.predict(input_val)
         
-        n = self.in_dev.shape[0]
+        n = input_val.shape[0]
         points = np.arange(n)
         
         predict     = np.argmax(predictions,
                                 axis = 1)
-        output_dev  = np.argmax(self.out_dev,
+        output_dev  = np.argmax(output_val,
                                 axis = 1)
         
         v = Visualiser1D(x_points   = [points, points],
-                         y_points   = [output_dev, predict, ],
+                         y_points   = [output_dev, predict],
                          colors     = ['b', 'r'],
                          markers    = ['s', '^'],
                          linetypes  = ['None', 'None'],
@@ -322,6 +324,12 @@ class NNPredictor:
             #print(x_test[i, :], y_test[i, 0])
             
         print('')
+
+    def get_predictions(self,
+                        in_data):
+        predictions_float = self.network.predict(in_data)
+        return np.argmax(predictions_float,
+                         axis = 1)
 
 
 def plot_covariance(data):
@@ -499,7 +507,8 @@ def main():
                            batch_size = n_batch,
                            reg_params = reg_parameters)
     
-    analyser.validate()
+    analyser.validate(analyser.in_dev,
+                      analyser.out_dev)
     
     
     #print(data.get_categories())
