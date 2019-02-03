@@ -117,6 +117,95 @@ def split_columns(data, ratios):
     return data[:n1, :], data[n1:n2, :], data[n2:, :]
 
 
+def split_data_5050(in_data, out_data):
+    '''
+    Assume that 'out_data' contains two columns with binary
+    classes. Then this functions removes data samples so that
+    both classes are represented by an equal amount of 
+    samples.
+    '''
+    # Get boolean arrays corresponding to the two classes
+    class_0 = (out_data[:, 0].astype(int) == 1)
+    class_1 = np.logical_not(class_0)
+
+    # Get separate arrays corresponding to the two classes
+    [input_0, output_0] = \
+        [in_data[class_0], out_data[class_0]]
+    [input_1, output_1] = \
+        [in_data[class_1], out_data[class_1]]
+    
+    n0 = input_0.shape[0]
+    n1 = input_1.shape[0]
+    
+    n_min = min(n0, n1)
+    if n0 < n1:
+        
+        input_1_50  = input_1[:n_min, :]
+        output_1_50 = output_1[:n_min, :] 
+
+        input_50  = np.append(input_1_50,
+                              input_0,
+                              axis = 0)
+        output_50 = np.append(output_1_50,
+                              output_0,
+                              axis = 0)
+        
+    elif n0 >= n1:
+
+        input_0_50  = input_0[:n_min, :]
+        output_0_50 = output_0[:n_min, :]
+
+        input_50  = np.append(input_0_50,
+                              input_1,
+                              axis = 0)
+        output_50 = np.append(output_0_50,
+                              output_1,
+                              axis = 0)
+
+    # Randomly shuffle the rows
+    indices = np.arange(2 * n_min)
+    np.random.shuffle(indices)
+
+    return input_50[indices, :], output_50[indices, :]
+
+
+def analyse_output_ratios(predicted_members,
+                          output_members):
+    '''
+    '''
+    n_all         = output_members.shape[0]
+    n_pred_member = np.count_nonzero(predicted_members)
+    print('\nNumber of samples predicted as member     :',
+          '{:>10}'.format(n_pred_member))
+    print('Number of samples predicted as non-member :',
+          '{:>10}'.format(n_all - n_pred_member))
+    
+    n_dev_member = np.sum(output_members)
+    ratio_nonmember_dev = \
+        float(n_all - n_dev_member) / float(n_all)
+    print('\nTrue ratio      (non-members / all) :',
+          '{0:14.4f}'.format(ratio_nonmember_dev))
+    
+    ratio_nonmember_pred = \
+            float(n_all - n_pred_member) / float(n_all)
+    print('Predicted ratio (non-members / all) :',
+          '{0:14.4f}'.format(ratio_nonmember_pred))
+    
+    
+    ratio_member = \
+        ratio_correctly_predicted_true(predicted_members,
+                                       output_members)
+    print('\nRatio of members that were correctly predicted as members:\n',
+          '{0:14.4f}'.format(ratio_member))
+
+    ratio_nonmember = \
+        ratio_correctly_predicted_false(predicted_members,
+                                        output_members)
+    print('\nRatio of non-members that were correctly predicted as non-member:\n',
+          '{0:14.4f}'.format(ratio_nonmember), 
+          '\n')
+    
+
 def get_train_test_dev_sets(input_data,
                             output_data,
                             ratios_train_dev = [0.8, 0.199]):
@@ -139,9 +228,13 @@ def get_train_test_dev_sets(input_data,
     n_train = in_train.shape[0]
     n_dev   = in_dev.shape[0] 
     n_test  = in_test.shape[0] 
-    print('\nSize of training set:    ', n_train)
-    print('Size of development set: ',   n_dev)
-    print('Size of test set:        ',   n_test, '\n')
+    print('\nSize of training set     : ',
+          '{:>20}'.format(n_train))
+    print('Size of development set  : ',
+          '{:>20}'.format(n_dev))
+    print('Size of test set         : ',
+          '{:>20}'.format(n_test),
+          '\n')
     
     return in_train, in_dev, in_test, \
         out_train, out_dev, out_test
@@ -218,18 +311,34 @@ def ratio_correctly_predicted_true(predictions,
     return float(n_correctly_pred_true) / float(n_true)
     
 
-def classify_from_regression(predictions,
-                             labels):
+def classify_from_float_0_1(predictions):
     '''
-    Classify regression results.
+    predictions   : Array with float numbers between zero 
+                    and one, representing probabilities
+                    for zero and one.
     '''
-    predicted_classes = (predictions > 0.5).astype(int)
+    return (predictions > 0.5).astype(int)
+
+
+def ratio_same_value(array1,
+                     array2):
+    '''
+    Ratio of elements that are the same in both arrays.
+    '''
+    m = 'The input arrays "array1" and "array2" must ' + \
+        'both be Numpy arrays of the same lenght and ' + \
+        'type int.'
+    assert (type(array1) == np.ndarray) and \
+        (type(array2) == np.ndarray) and \
+        (array1.dtype == int) and \
+        (array2.dtype == int) and \
+        (array1.shape == array2.shape), m
     
-    n_correctly_pred  = np.sum(predicted_classes == labels)
-    n_samples         = labels.shape[0]
+    n_total = array1.shape[0]
+    n_same  = np.sum(array1 == array2)
     
-    return float(n_correctly_pred) / float(n_samples)
-    
+    return float(n_same) / float(n_total)
+
 
 class NNPredictor:
     '''
@@ -346,7 +455,7 @@ def plot_covariance(data):
     
     for i in range(n):
         for j in range(n):
-            print(covariance[i, j],
+            print('{0: .4E}'.format(covariance[i, j]),
                   end = " ")
         print('')
     print('')
@@ -472,11 +581,15 @@ def main():
     # a least-squares error functional
     regressor = LinearRegression()
     regressor.fit(input_train,
-                  output_train[:, 0])
+                  output_train[:, 1])
     output_linreg = regressor.predict(input_dev)
-    
-    accuracy = classify_from_regression(output_linreg,
-                                        output_dev[:, 1])
+
+    predictions_reg = \
+        classify_from_float_0_1(output_linreg)
+    correct_members = \
+        output_dev[:, 1].astype(int)
+    accuracy = ratio_same_value(predictions_reg,
+                                correct_members)
     print('\nClassification accuracy of linear regression:',
           accuracy,
           '\n')
@@ -510,7 +623,14 @@ def main():
     analyser.validate(analyser.in_dev,
                       analyser.out_dev)
     
+    # Array containing ones for 'Member' and zeros for 'Casual'
+    predicted_members   = \
+        analyser.get_predictions(analyser.in_dev)
+    output_members_dev  = \
+        output_dev[:, 1].astype(int)
     
+    analyse_output_ratios(predicted_members,
+                          output_members_dev)
     #print(data.get_categories())
     
     
