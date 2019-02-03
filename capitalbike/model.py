@@ -151,7 +151,13 @@ class BikingData:
         plt.legend(prop={'size': 10})
         plt.xlabel(variable + ' (s)')
         plt.ylabel('Number of smaples')
+
+        #     Save the plot
+        name = 'histogram_' + variable 
+        plt.savefig(name + '.pdf', format='pdf', dpi=500)
+        
         plt.show()
+        
         
         
 def normalize_columns(data):
@@ -331,7 +337,7 @@ def setup_trained_network(x_train,
                                 kernel_regularizer = reg.l1_l2(l1 = reg_parameters[0],
                                                                l2 = reg_parameters[1]),
                                 input_shape = x_train[0].shape))
-    for i in range(1, len(n_per_layer) - 1):
+    for i in range(1, len(n_per_layer)):
         network.add(ks.layers.Dense(units = n_per_layer[i],
                                     activation = tf.nn.relu,
                                     kernel_regularizer = reg.l1_l2(l1 = reg_parameters[0],
@@ -548,8 +554,14 @@ def plot_covariance(data):
               'Member type']
     plt.xticks(items, values, size = 8)
     plt.yticks(items, values, size = 8)
+
+    #     Save the plot
+    name = 'covariance' 
+    plt.savefig(name + '.pdf', format='pdf', dpi=500)
     
     plt.show()
+
+    
     
     
 class Visualiser1D:
