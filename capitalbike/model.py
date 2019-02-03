@@ -81,8 +81,79 @@ class BikingData:
             print(' ', variables[i])
             
         print('')
-    
-    
+
+    def get_values(self,
+                   variable,
+                   member_type):
+        '''
+        Get all values of 'variable' that are associated with
+        'member_type'.
+        '''
+        member_labels = self.data['Member type'].values
+        
+        if member_type == 'Casual':
+            member_id = 0
+        elif member_type == 'Member':
+            member_id = 1
+            
+        this_type = (member_labels.astype(int) == member_id)
+        
+        return self.data[variable].values[this_type]
+        
+    def plot_histogram(self,
+                       variable,
+                       min_x = None,
+                       max_x = None):
+        '''
+        For 'variable', plot separate histograms associated 
+        with members and non-members.
+        '''
+         
+        # member_labels   = self.data['Member type'].values 
+        
+        # members = (member_labels.astype(int) == 1)
+        # casuals = np.logical_not(members)
+        
+        # values_members = variable_values[members]
+        # values_casuals = variable_values[casuals]
+
+        values_members = self.get_values(variable,
+                                         'Member')
+        values_casuals = self.get_values(variable,
+                                         'Casual')
+
+        variable_values = self.data[variable].values
+        
+        min_value = np.amin(variable_values)
+        max_value = np.amax(variable_values)
+
+        if min_x is None:
+            min_x = min_value
+        if max_x is None:
+            max_x = max_value
+            
+        n_bins = 100
+        bin_array = np.linspace(min_x,
+                                max_x,
+                                100) 
+        plt.hist(values_members, 
+                 bins = bin_array, 
+                 color = 'b',
+                 histtype = 'step',
+                 label='Members')
+        plt.hist(values_casuals,
+                 bins = bin_array,
+                 color = 'r',
+                 histtype = 'step',
+                 fill = False,
+                 label = 'Casuals')
+        plt.xlim(min_x, max_x)
+        plt.legend(prop={'size': 10})
+        plt.xlabel(variable + ' (s)')
+        plt.ylabel('Number of smaples')
+        plt.show()
+        
+        
 def normalize_columns(data):
     '''
     Normalize the columns of the array 'data' so that
@@ -385,7 +456,8 @@ class NNPredictor:
         
     def validate(self,
                  input_val,
-                 output_val):
+                 output_val,
+                 plot = False):
         '''
         Validate the trained network.
         '''
@@ -398,28 +470,30 @@ class NNPredictor:
         print('\nError in the development set:')
         print('\nLoss:', loss)
         print('Accuracy:', metrics, '\n')
+
         
+        if plot:
+
+            predictions = self.network.predict(input_val)
         
-        predictions = self.network.predict(input_val)
+            n = input_val.shape[0]
+            points = np.arange(n)
         
-        n = input_val.shape[0]
-        points = np.arange(n)
+            predict     = np.argmax(predictions,
+                                    axis = 1)
+            output_dev  = np.argmax(output_val,
+                                    axis = 1)
         
-        predict     = np.argmax(predictions,
-                                axis = 1)
-        output_dev  = np.argmax(output_val,
-                                axis = 1)
-        
-        v = Visualiser1D(x_points   = [points, points],
-                         y_points   = [output_dev, predict],
-                         colors     = ['b', 'r'],
-                         markers    = ['s', '^'],
-                         linetypes  = ['None', 'None'],
-                         labels     = ['Correct values', 'Predictions'])
-        n_plots = 10
-        for i in range(n_plots):
-            v.make_plot(x_limits = [50*i, 50*(i+1)],
-                        y_limits = [0, 1.5])
+            v = Visualiser1D(x_points   = [points, points],
+                             y_points   = [output_dev, predict],
+                             colors     = ['b', 'r'],
+                             markers    = ['s', '^'],
+                             linetypes  = ['None', 'None'],
+                             labels     = ['Correct values', 'Predictions'])
+            n_plots = 10
+            for i in range(n_plots):
+                v.make_plot(x_limits = [50*i, 50*(i+1)],
+                            y_limits = [0, 1.5])
             
     def test(self):
         '''
@@ -556,7 +630,11 @@ def main():
     data = BikingData(data_file)
 
     data.print_categories()
-    
+    data.plot_histogram('Duration',
+                        max_x = 10000)
+    data.plot_histogram('Start station number')
+    data.plot_histogram('End station number')
+    data.plot_histogram('Bike number')
     
     input_data  = data.get_array()[:, :4]
     output_data = data.get_array()[:, 4:5]
@@ -619,9 +697,11 @@ def main():
                            n_mainloop = n_iterations,
                            batch_size = n_batch,
                            reg_params = reg_parameters)
-    
+
+    make_plots = True
     analyser.validate(analyser.in_dev,
-                      analyser.out_dev)
+                      analyser.out_dev,
+                      plot = make_plots)
     
     # Array containing ones for 'Member' and zeros for 'Casual'
     predicted_members   = \
