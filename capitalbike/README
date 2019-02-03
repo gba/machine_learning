@@ -17,6 +17,7 @@ Requirements:
 	- Python 3, including the Python libraries
 	Numpy, Pandas, Tensorflow, Keras, Scikit-learn, and
 	Matplotlib
+	- Jupyter Notebook
 
 Before running the code, download the biking data from
 
@@ -26,4 +27,8 @@ store them in the same directory as analysis.py.
 
 The program may be run by calling
 
-./analysis.py
+./model.py
+
+For a deeper analysis, the Jupyter Notebook may be run:
+
+jupyter-notebook analysis.ipynb &
